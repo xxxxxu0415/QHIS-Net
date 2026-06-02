@@ -1,46 +1,75 @@
 ## Installation
 
 ### Requirements
-- Linux or macOS with Python ≥ 3.6
-- PyTorch ≥ 1.9 and [torchvision](https://github.com/pytorch/vision/) that matches the PyTorch installation.
-  Install them together at [pytorch.org](https://pytorch.org) to make sure of this. Note, please check
-  PyTorch version matches that is required by Detectron2.
-- Detectron2: follow [Detectron2 installation instructions](https://detectron2.readthedocs.io/tutorials/install.html).
-- OpenCV is optional but needed by demo and visualization
-- `pip install -r requirements.txt`
 
-### CUDA kernel for MSDeformAttn
-After preparing the required environment, run the following command to compile CUDA kernel for MSDeformAttn:
+* Linux or macOS with Python ≥ 3.8
+* PyTorch ≥ 1.9
+* torchvision compatible with the installed PyTorch version
+* Detectron2
+* OpenCV (optional, for visualization)
+* CUDA Toolkit (for MSDeformAttn compilation)
 
-`CUDA_HOME` must be defined and points to the directory of the installed CUDA toolkit.
+Install the required packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### Install Detectron2
+
+Please follow the official Detectron2 installation instructions:
+
+https://detectron2.readthedocs.io/tutorials/install.html
+
+---
+
+### Compile MSDeformAttn
+
+After installing the dependencies, compile the CUDA operators:
 
 ```bash
 cd m2fp/modeling/pixel_decoder/ops
 sh make.sh
 ```
 
-#### Building on another system
-To build on a system that does not have a GPU device but provide the drivers:
-```bash
-TORCH_CUDA_ARCH_LIST='8.0' FORCE_CUDA=1 python setup.py build install
-```
+`CUDA_HOME` must point to your CUDA installation directory.
 
-### Example conda environment setup
+---
+
+### Example Conda Environment
+
 ```bash
-conda create --name m2fp python=3.8 -y
-conda activate m2fp
+conda create --name qhisnet python=3.8 -y
+conda activate qhisnet
+
 conda install pytorch==1.9.0 torchvision==0.10.0 cudatoolkit=11.1 -c pytorch -c nvidia
+
 pip install -U opencv-python
 
-# under your working directory
-git clone git@github.com:facebookresearch/detectron2.git
+git clone https://github.com/facebookresearch/detectron2.git
 cd detectron2
 pip install -e .
 
 cd ..
-git clone https://github.com/soeaver/M2FP.git
-cd M2FP
+
+git clone https://gitee.com/yufeixu0507/pedestrian-segmentation.git
+
+cd pedestrian-segmentation
+
 pip install -r requirements.txt
+
 cd m2fp/modeling/pixel_decoder/ops
 sh make.sh
 ```
+
+---
+
+### Verification
+
+```bash
+python train_net.py --help
+```
+
+If the command executes successfully, the installation is complete.

@@ -135,8 +135,9 @@ class M2FP(nn.Module):
             for i in range(dec_layers - 1):
                 aux_weight_dict.update({k + f"_{i}": v for k, v in weight_dict.items()})
             weight_dict.update(aux_weight_dict)
+            weight_dict["loss_aiscm"] = 0.05
 
-        losses = ["labels", "masks"]
+        losses = ["labels", "masks", "aiscm"]
 
         criterion = SetCriterion(
             sem_seg_head.num_classes,
@@ -227,6 +228,12 @@ class M2FP(nn.Module):
                 else:
                     # remove this loss if not specified in `weight_dict`
                     losses.pop(k)
+            if "ohmrm_boundary_logits" in outputs:
+                losses["loss_ohmrm_boundary"] = ohmrm_boundary_loss(
+                    outputs["ohmrm_boundary_logits"],
+                    targets,
+                ) * 0.05
+
             return losses
         else:
             mask_cls_results = outputs["pred_logits"]  # (B, Q, C+1)
@@ -401,3 +408,47 @@ class M2FP(nn.Module):
         category_probs /= paste_times
 
         return category_probs
+
+
+
+def ohmrm_boundary_loss(boundary_logits, targets):
+    import torch
+    import torch.nn.functional as F
+
+    if boundary_logits.dim() == 3:
+        boundary_logits = boundary_logits[:, None, :, :]
+
+    B, Q, H, W = boundary_logits.shape
+    pred = boundary_logits.max(dim=1, keepdim=True).values
+
+    gt_list = []
+    for t in targets:
+        masks = t["masks"].float().to(boundary_logits.device)
+
+        if masks.numel() == 0:
+            union = torch.zeros((1, H, W), device=boundary_logits.device)
+        else:
+            masks = F.interpolate(masks[:, None], size=(H, W), mode="nearest")[:, 0]
+            union = masks.max(dim=0, keepdim=True).values
+
+        dilate = F.max_pool2d(union[None], 3, 1, 1)[0]
+        erode = 1.0 - F.max_pool2d((1.0 - union)[None], 3, 1, 1)[0]
+        boundary = (dilate - erode).clamp(0, 1)
+        boundary = F.max_pool2d(boundary[None], 3, 1, 1)[0]
+
+        gt_list.append(boundary)
+
+    gt = torch.stack(gt_list, dim=0)
+
+    pos = gt.sum()
+    neg = gt.numel() - pos
+    pos_weight = (neg / (pos + 1.0)).clamp(min=1.0, max=20.0)
+
+    bce = F.binary_cross_entropy_with_logits(pred, gt, pos_weight=pos_weight)
+
+    pred_prob = pred.sigmoid()
+    inter = (pred_prob * gt).sum(dim=(1, 2, 3))
+    denom = pred_prob.sum(dim=(1, 2, 3)) + gt.sum(dim=(1, 2, 3))
+    dice = 1.0 - (2.0 * inter + 1.0) / (denom + 1.0)
+
+    return bce + dice.mean()

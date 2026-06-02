@@ -1,97 +1,190 @@
-# M2FP: Mask2Former for Parsing
+# QHIS-Net: A Query-guided Human Instance Separation Framework for Crowded Human Instance Segmentation
 
-> [Deep Learning Technique for Human Parsing: A Survey and Outlook]() <br>
-> [![paper](https://img.shields.io/badge/Paper-arxiv-b31b1b)](https://arxiv.org/pdf/2301.00394.pdf)
+Official implementation of **QHIS-Net**, a query-guided human instance separation framework for crowded human instance segmentation.
 
-<p align="center"><img width="90%" src="datasets/m2fp_arch.png" /></p>
+QHIS-Net is built upon M2FP and introduces two dedicated modules to address severe occlusion, instance adhesion, and boundary ambiguity in crowded human scenes:
 
+* **OHMRM**: Occlusion-aware Human Mask Refinement Module
+* **AISCM**: Adjacent Instance Separation Constraint Module
 
-If you find this repository helpful, please consider citing:
+The proposed framework improves mask quality and instance discrimination under challenging crowded scenarios while preserving the efficiency of the query-based segmentation paradigm.
 
-```BibTeX
-@article{yang2023humanparsing,
-  title={Deep Learning Technique for Human Parsing: A Survey and Outlook},
-  author={Lu Yang and Wenhe Jia and Shan Li and Qing Song},
-  journal={arXiv preprint arXiv:2301.00394},
-  year={2023}
-}
-```
+---
 
+## Framework Overview
 
-### Features
-* A single architecture for single human parsing, and multiple (instance-level) human parsing.
-* Support several parsing datasets: LIP, PASCAL-Person-Part, CIHP, MHP-v2.
+<p align="center">
+<img src="docs/framework.png" width="90%">
+</p>
 
+QHIS-Net consists of three components:
 
-## Updates
-[2023/1/19] models in GoogleDrive are released.
+1. M2FP-based query segmentation backbone
+2. Occlusion-aware Human Mask Refinement Module (OHMRM)
+3. Adjacent Instance Separation Constraint Module (AISCM)
 
-[2023/1/3] paper and code released.
+---
 
-[2022/6/19] code initialization.
+## Main Contributions
 
+### OHMRM
+
+The Occlusion-aware Human Mask Refinement Module refines coarse query masks through:
+
+* Multi-scale feature aggregation
+* Difficulty-aware weighting
+* Residual mask refinement
+
+This module effectively enhances:
+
+* Occluded regions
+* Small-scale persons
+* Ambiguous boundaries
+
+### AISCM
+
+The Adjacent Instance Separation Constraint Module introduces a query-level separation constraint to reduce overlap between neighboring instances.
+
+The module encourages:
+
+* Better instance discrimination
+* Reduced mask adhesion
+* Clearer boundary assignment
+
+---
+
+## Datasets
+
+Experiments are conducted on the CIHP dataset.
+
+To evaluate cross-dataset generalization under severe crowding and occlusion, we additionally report results on the OCHuman benchmark without further fine-tuning.
+
+- Training Dataset: CIHP
+- Testing Dataset: CIHP
+- Generalization Dataset: OCHuman
+
+---
 
 ## Installation
 
-See [installation instructions](INSTALL.md).
+Please refer to:
 
-
-## Getting Started
-
-See [Preparing Datasets for M2FP](datasets/README.md).
-
-See [Getting Started with M2FP](GETTING_STARTED.md).
-
-
-## Results and Models
-
-|  Datasets         | mIoU  |  APr  |  APp  | DOWNLOAD |
-|:-----------------:|:-----:|:-----:|:-----:| :-------:|
-| LIP               | 59.86 |       |       | [BaiduCloud (passwd: 36ec)](https://pan.baidu.com/s/1ah-0RJ_BdPjLqklWmcoiFA), [GoogleDrive](https://drive.google.com/drive/folders/1lSRMJy_g5Q7FsH4dlahST9bIgNusMuCR?usp=share_link)        |
-| PASCAL-Person-Part| 72.54 | 56.46 |       |          |
-| CIHP              | 69.15 | 60.47 |       | [BaiduCloud (passwd: jzrn)](https://pan.baidu.com/s/1oquw4pujHdkCEPtUHFyG7g), [GoogleDrive](https://drive.google.com/drive/folders/1UCyo2c1zJqncItyydC64PE78KaX0iR2F?usp=share_link)          |
-| MHP-v2            | 47.64 |       | 53.36 | [BaiduCloud (passwd: seel)](https://pan.baidu.com/s/17S-932D-bs1VlU3MANge9A), [GoogleDrive](https://drive.google.com/drive/folders/1i-OFPzPRfRQ3prCtC60gmq5h-Ke1vo9o?usp=share_link)      |
-
-
-<p align="center"><img width="50%" src="datasets/m2fp_performance.png" /></p>
-
-
-## License
-
-Shield: [![CC BY-NC 4.0][cc-by-nc-shield]][cc-by-nc]
-
-The majority of M2FP is licensed under a
-[Creative Commons Attribution-NonCommercial 4.0 International License](LICENSE).
-
-[![CC BY-NC 4.0][cc-by-nc-image]][cc-by-nc]
-
-[cc-by-nc]: http://creativecommons.org/licenses/by-nc/4.0/
-[cc-by-nc-image]: https://licensebuttons.net/l/by-nc/4.0/88x31.png
-[cc-by-nc-shield]: https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg
-
-
-## <a name="CitingM2FP"></a>Citing MaskFormer and Mask2Former
-
-If you find the code useful, please also consider the following MaskFormer and Mask2Former BibTeX entry.
-
-```BibTeX
-@inproceedings{cheng2021mask2former,
-  title={Masked-attention Mask Transformer for Universal Image Segmentation},
-  author={Bowen Cheng and Ishan Misra and Alexander G. Schwing and Alexander Kirillov and Rohit Girdhar},
-  journal={CVPR},
-  year={2021}
-}
+```text
+INSTALL.md
 ```
 
-```BibTeX
-@inproceedings{cheng2021maskformer,
-  title={Per-Pixel Classification is Not All You Need for Semantic Segmentation},
-  author={Bowen Cheng and Alexander G. Schwing and Alexander Kirillov},
-  journal={NeurIPS},
-  year={2021}
-}
+---
+
+
+## Training
+
+```bash
+python train_net.py \
+--config-file configs/cihp/m2fp_R101_bs16_265k.yaml
 ```
+
+---
+
+## Evaluation
+
+### Standard Evaluation
+
+```bash
+python train_net.py \
+    --eval-only \
+    --config-file configs/cihp/m2fp_R101_bs16_265k.yaml \
+    MODEL.WEIGHTS weights/final.pkl
+```
+
+### COCO-style Instance Segmentation AP
+
+To evaluate COCO-style mask AP (AP, AP50, AP75, etc.), run:
+
+```bash
+python tools/eval_qhisnet_person_coco_ap.py \
+    --config configs/cihp/qhis_net.yaml \
+    --weights weights/final.pkl \
+    --gt-json path/to/annotation.json \
+    --image-root path/to/images
+```
+
+The evaluation results will be saved in:
+
+```text
+outputs/
+├── predictions.json
+└── metrics.json
+```
+
+---
+
+## Project Structure
+
+```text
+QHIS-Net
+├── configs/                 # Configuration files
+├── docs/                    # Framework and module illustrations
+│   ├── framework.png
+│   ├── ohmrm.png
+│   └── aiscm.png
+│
+├── m2fp/                    # Core implementation
+├── tools/                   # Dataset conversion and evaluation tools
+├── weights/                 # Model checkpoints
+│   └── README.md
+│
+├── train.sh
+├── test.sh
+├── train_net.py
+│
+├── README.md
+├── INSTALL.md
+├── GETTING_STARTED.md
+├── requirements.txt
+├── LICENSE
+└── .gitignore
+```
+
+```
+
+---
+
+Experimental Results
+
+QHIS-Net is evaluated on CIHP for in-domain testing and on OCHuman for cross-dataset generalization without fine-tuning.
+
+The evaluation focuses on crowded and occluded human scenes, where QHIS-Net improves instance separation and mask boundary quality over the M2FP baseline.
+
+The reported metrics include COCO-style mask AP, AP50, AP75, and scale-specific AP.
+
+The framework significantly enhances the segmentation performance of small-scale human instances in crowded scenes while achieving clearer and more accurate boundary assignment for adjacent and adhered human instances.
+
+The evaluation includes CIHP in-domain testing and OCHuman cross-dataset testing.
+
+
+---
 
 ## Acknowledgement
 
-Code is largely based on Mask2Former (https://github.com/facebookresearch/Mask2Former).
+This work is built upon:
+
+* M2FP
+* Mask2Former
+* Detectron2
+
+We thank the authors for making their code publicly available.
+
+---
+
+## Citation
+
+If you find this repository useful, please cite:
+
+```bibtex
+@article{xu2026qhisnet,
+  title={QHIS-Net: A Query-guided Human Instance Separation Framework for Crowded Human Instance Segmentation},
+  author={Xu, Kexin and others},
+  journal={Under Review},
+  year={2026}
+}
+```

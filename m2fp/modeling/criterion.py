@@ -137,6 +137,67 @@ class SetCriterion(nn.Module):
         losses = {"loss_ce": loss_ce}
         return losses
     
+
+    def loss_aiscm(self, outputs, targets, indices, num_masks):
+        assert "pred_masks" in outputs
+        assert "pred_logits" in outputs
+
+        pred_masks = outputs["pred_masks"]
+        pred_logits = outputs["pred_logits"]
+
+        B, Q, H, W = pred_masks.shape
+        device = pred_masks.device
+
+        score_thr = 0.3
+        iou_thr = 0.15
+        topk = 30
+
+        if not hasattr(self, "_aiscm_debug_printed"):
+            print("[AISCM] enabled")
+            self._aiscm_debug_printed = True
+
+        total_loss = pred_masks.new_tensor(0.0)
+        valid_count = 0
+
+        for b in range(B):
+            logits_b = pred_logits[b]
+            masks_b = pred_masks[b]
+
+            scores_b = logits_b.softmax(dim=-1)[:, :-1].max(dim=-1).values
+            k = min(topk, Q)
+
+            topk_scores, topk_idx = scores_b.topk(k)
+            keep = topk_scores > score_thr
+
+            if keep.sum() < 2:
+                continue
+
+            selected_idx = topk_idx[keep]
+            masks_sel = masks_b[selected_idx].sigmoid()
+
+            N = masks_sel.shape[0]
+            masks_flat = masks_sel.flatten(1)
+
+            inter = torch.matmul(masks_flat, masks_flat.t())
+            area = masks_flat.sum(dim=1, keepdim=True)
+            union = area + area.t() - inter + 1e-6
+            soft_iou = inter / union
+
+            eye = torch.eye(N, device=device, dtype=torch.bool)
+            pair_mask = ~eye
+            pair_mask = pair_mask & (soft_iou > iou_thr)
+
+            if pair_mask.sum() == 0:
+                continue
+
+            total_loss = total_loss + soft_iou[pair_mask].mean()
+            valid_count += 1
+
+        if valid_count == 0:
+            return {"loss_aiscm": pred_masks.sum() * 0.0}
+
+        return {"loss_aiscm": total_loss / valid_count}
+
     def loss_masks(self, outputs, targets, indices, num_masks):
         """Compute the losses related to the masks: the focal loss and the dice loss.
         targets dicts must contain the key "masks" containing a tensor of dim [nb_target_boxes, h, w]
@@ -205,6 +266,7 @@ class SetCriterion(nn.Module):
         loss_map = {
             'labels': self.loss_labels,
             'masks': self.loss_masks,
+            'aiscm': self.loss_aiscm,
         }
         assert loss in loss_map, f"do you really want to compute {loss} loss?"
         return loss_map[loss](outputs, targets, indices, num_masks)

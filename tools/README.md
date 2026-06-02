@@ -1,79 +1,31 @@
-This directory contains few tools for MaskFormer.
+# Tools
 
-* `convert-torchvision-to-d2.py`
+This directory contains utility scripts for dataset conversion, model evaluation, and pretrained weight conversion.
 
-Tool to convert torchvision pre-trained weights for D2.
+* `convert_cihp_to_person_coco.py`
 
-```
-wget https://download.pytorch.org/models/resnet101-63fe2227.pth
-python tools/convert-torchvision-to-d2.py resnet101-63fe2227.pth R-101.pkl
-```
+Tool to convert CIHP human instance annotations into COCO-style person instance segmentation format.
 
-* `convert-pretrained-swin-model-to-d2.py`
+* `convert_ochuman_to_person_coco.py`
 
-Tool to convert Swin Transformer pre-trained weights for D2.
+Tool to convert OCHuman annotations into COCO-style person instance segmentation format for cross-dataset generalization evaluation.
 
-```
-pip install timm
+* ``eval_qhisnet_person_coco_ap.py``
 
-wget https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth
-python tools/convert-pretrained-swin-model-to-d2.py swin_tiny_patch4_window7_224.pth swin_tiny_patch4_window7_224.pkl
-
-wget https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_small_patch4_window7_224.pth
-python tools/convert-pretrained-swin-model-to-d2.py swin_small_patch4_window7_224.pth swin_small_patch4_window7_224.pkl
-
-wget https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_base_patch4_window12_384_22k.pth
-python tools/convert-pretrained-swin-model-to-d2.py swin_base_patch4_window12_384_22k.pth swin_base_patch4_window12_384_22k.pkl
-
-wget https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_large_patch4_window12_384_22k.pth
-python tools/convert-pretrained-swin-model-to-d2.py swin_large_patch4_window12_384_22k.pth swin_large_patch4_window12_384_22k.pkl
-```
-
-* `evaluate_pq_for_semantic_segmentation.py`
-
-Tool to evaluate PQ (PQ-stuff) for semantic segmentation predictions.
-
-Usage:
-
-```
-python tools/evaluate_pq_for_semantic_segmentation.py --dataset-name ade20k_sem_seg_val --json-file OUTPUT_DIR/inference/sem_seg_predictions.json
-```
-
-where `OUTPUT_DIR` is set in the config file.
+Tool to run inference with a trained QHIS-Net/M2FP model and evaluate COCO-style instance segmentation AP, including AP, AP50, AP75, AP_small, AP_medium, and AP_large.
 
 * `evaluate_coco_boundary_ap.py`
 
-Tool to evaluate Boundary AP for instance segmentation predictions.
-
-Usage:
-
-```
-python tools/coco_instance_evaluation.py --gt-json-file COCO_GT_JSON --dt-json-file COCO_DT_JSON
-```
-
-To install Boundary IoU API, run:
-
-```
-pip install git+https://github.com/bowenc0221/boundary-iou-api.git
-```
+Tool to evaluate boundary-aware COCO-style AP for instance segmentation masks.
 
 * `analyze_model.py`
 
-Tool to analyze model parameters and flops.
+Tool to analyze model complexity and structure.
 
-Usage for semantic segmentation (ADE20K only, use with caution!):
+* `convert-pretrained-swin-model-to-d2.py`
 
-```
-python tools/analyze_model.py --num-inputs 1 --tasks flop --use-fixed-input-size --config-file CONFIG_FILE
-```
+Tool to convert Swin Transformer pretrained weights for Detectron2.
 
-Note that, for semantic segmentation (ADE20K only), we use a dummy image with fixed size that equals to `cfg.INPUT.CROP.SIZE[0] x cfg.INPUT.CROP.SIZE[0]`.
-Please do not use `--use-fixed-input-size` for calculating FLOPs on other datasets like Cityscapes!
+* `convert-torchvision-to-d2.py`
 
-Usage for panoptic and instance segmentation:
-
-```
-python tools/analyze_model.py --num-inputs 100 --tasks flop --config-file CONFIG_FILE
-```
-
-Note that, for panoptic and instance segmentation, we compute the average flops over 100 real validation images.
+Tool to convert torchvision pretrained weights into Detectron2-compatible format.

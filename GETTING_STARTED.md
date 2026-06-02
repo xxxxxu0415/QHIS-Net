@@ -1,22 +1,131 @@
-## Getting Started with M2FP
+# Getting Started with QHIS-Net
 
-This document provides a brief intro of the usage of M2FP.
+This document provides a brief introduction to training and evaluating QHIS-Net for crowded human instance segmentation.
 
-Please see [Getting Started with Detectron2](https://github.com/facebookresearch/detectron2/blob/master/GETTING_STARTED.md) for full usage.
+---
 
+## Dataset Preparation
 
-### Training & Evaluation in Command Line
+Current experiments are conducted on the CIHP dataset.
 
-We provide a script `train.sh`, that is made to train all the configs provided in M2FP.
+Please organize the dataset as follows:
+
+```text
+datasets/
+└── CIHP
+    ├── Training
+    ├── Validation
+    ├── train_id.txt
+    └── val_id.txt
 ```
+
+Refer to the dataset preparation instructions for more details.
+
+---
+
+## Training
+
+To train QHIS-Net:
+
+```bash
 sh train.sh
 ```
-The configs are made for 8-GPU training.
 
+or
 
-To evaluate a model's performance, use
+```bash
+python train_net.py \
+    --config-file configs/cihp/qhisnet.yaml
 ```
+
+The default configuration is designed for multi-GPU training.
+
+---
+
+## Evaluation
+
+To evaluate a trained model:
+
+```bash
 sh test.sh
 ```
-For more options, see `python train_net.py -h`.
 
+or
+
+```bash
+python train_net.py \
+    --eval-only \
+    --config-file configs/cihp/qhisnet.yaml \
+    MODEL.WEIGHTS weights/final.pkl
+```
+
+---
+
+## Main Components
+
+QHIS-Net contains two key modules:
+
+### OHMRM
+
+Occlusion-aware Human Mask Refinement Module
+
+* Multi-scale feature enhancement
+* Difficulty-aware weighting
+* Residual mask refinement
+
+### AISCM
+
+Adjacent Instance Separation Constraint Module
+
+* Query-level separation constraint
+* Neighboring instance discrimination
+* Overlap suppression
+
+---
+
+## Expected Outputs
+
+Training logs and checkpoints will be saved to:
+
+```text
+output/
+```
+
+including:
+
+```text
+output/
+├── metrics.json
+├── events.out.*
+├── model_final.pth
+└── inference/
+```
+
+---
+
+## Reproducing the Paper Results
+
+To reproduce the results reported in the paper:
+
+```bash
+python train_net.py \
+    --config-file configs/cihp/qhisnet.yaml
+```
+
+After training is completed, evaluate the final checkpoint:
+
+```bash
+python train_net.py \
+    --eval-only \
+    MODEL.WEIGHTS output/model_final.pth
+```
+
+---
+
+## Additional Options
+
+For more options:
+
+```bash
+python train_net.py -h
+```
