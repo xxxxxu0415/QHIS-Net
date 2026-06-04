@@ -11,19 +11,6 @@ The proposed framework improves mask quality and instance discrimination under c
 
 ---
 
-## Framework Overview
-
-<p align="center">
-<img src="docs/framework.png" width="90%">
-</p>
-
-QHIS-Net consists of three components:
-
-1. M2FP-based query segmentation backbone
-2. Occlusion-aware Human Mask Refinement Module (OHMRM)
-3. Adjacent Instance Separation Constraint Module (AISCM)
-
----
 
 ## Main Contributions
 
