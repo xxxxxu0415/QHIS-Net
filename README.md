@@ -18,9 +18,10 @@ The proposed framework improves mask quality and instance discrimination under c
 
 The Occlusion-aware Human Mask Refinement Module refines coarse query masks through:
 
-* Multi-scale feature aggregation
-* Difficulty-aware weighting
-* Residual mask refinement
+* Query-conditioned residual refinement
+* Difficulty-guided local residual gating
+* Weakly gated multi-scale residual compensation
+* Boundary auxiliary contour supervision
 
 This module effectively enhances:
 
@@ -89,7 +90,7 @@ To evaluate COCO-style mask AP (AP, AP50, AP75, etc.), run:
 
 ```bash
 python tools/eval_qhisnet_person_coco_ap.py \
-    --config configs/cihp/qhis_net.yaml \
+    --config configs/cihp/m2fp_R101_bs16_265k.yaml \
     --weights weights/final.pkl \
     --gt-json path/to/annotation.json \
     --image-root path/to/images
